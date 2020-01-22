@@ -3,16 +3,17 @@ from OpenGL.GLUT import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from operator import add
+import math
 
-r=30000
+r=300
 ugao=0
 
 def jednacine(original,slika,T1,T2):
 	M=[]
-	M.append(np.subtract(np.dot(original[1],T1[2]),np.dot(original[2],T1[1])))
-	M.append(np.add(np.dot(-1*original[0],T1[2]),np.dot(original[2],T1[0])))
-	M.append(np.subtract(np.dot(slika[1],T2[2]),np.dot(slika[2],T2[1])))
-	M.append(np.add(np.dot(-1*slika[0],T2[2]),np.dot(slika[2],T2[0])))
+	M.append(np.subtract(np.dot(original[1],T1[2]),T1[1]))
+	M.append(np.add(np.dot(-1*original[0],T1[2]),T1[0]))
+	M.append(np.subtract(np.dot(slika[1],T2[2]),T2[1]))
+	M.append(np.add(np.dot(-1*slika[0],T2[2]),T2[0]))
 	return M
 
 def Matrica(v):
@@ -60,6 +61,88 @@ def DLT(Originali,Slike,n):
 	Matrica.append(Treci)
 
 	return(Matrica)
+
+def teziste(Tacke,n):
+	G=[]
+	X=0
+	Y=0
+	for i in range(0,n):
+		X=X+Tacke[i][0]
+		Y=Y+Tacke[i][1]
+	X=float(float(X)/n)
+	Y=float(float(Y)/n)
+	G.append(X)
+	G.append(Y)
+	return G
+
+def alpha(Tacke,n):
+	a=0
+	for i in range(0,n):
+		a=a+math.sqrt(Tacke[i][0]*Tacke[i][0]+Tacke[i][1]*Tacke[i][1])
+	a=a/n
+	return a
+
+def skrati(Tacke,n):
+	Rez=[]
+	for i in range(0,n):
+		temp=[]
+		temp.append(1.0*Tacke[i][0]/Tacke[i][2])
+		temp.append(1.0*Tacke[i][1]/Tacke[i][2])
+		temp.append(1.0*Tacke[i][2]/Tacke[i][2])
+		Rez.append(temp)
+	return Rez
+
+def nDLT(Originali,Slike,n):
+	nOriginali=skrati(Originali,n)
+	nSlike=skrati(Slike,n)
+
+	G=teziste(nOriginali,n)
+	G1=teziste(nSlike,n)
+
+	G[0]=G[0]*(-1)
+	G[1]=G[1]*(-1)
+	G1[0]=G1[0]*(-1)
+	G1[1]=G1[1]*(-1)
+
+	O=[]
+	S=[]
+
+	for i in range(0,n):
+		O.append([nOriginali[i][0]+G[0],nOriginali[i][1]+G[1],nOriginali[i][2]])
+		S.append([nSlike[i][0]+G1[0],nSlike[i][1]+G1[1],nSlike[i][2]])
+
+	alfa=alpha(O,n)
+	alfa1=alpha(S,n)
+
+	k=math.sqrt(2)/alfa
+	k1=math.sqrt(2)/alfa1
+
+	M=[]
+	M1=[]
+
+	M.append([k,0,k*G[0]])
+	M.append([0,k,k*G[1]])
+	M.append([0,0,1])
+
+	M1.append([k1,0,k1*G1[0]])
+	M1.append([0,k1,k1*G1[1]])
+	M1.append([0,0,1])
+
+	finalO=[]
+	finalS=[]
+
+	for i in range(0,n):
+		temp=np.matrix.transpose(np.asarray(nOriginali[i]))
+		finalO.append(np.dot(M,temp))
+		temp1=np.matrix.transpose(np.asarray(nSlike[i]))
+		finalS.append(np.dot(M1,temp1))	
+
+	P1=DLT(finalO,finalS,n)
+
+	inverzM1=np.linalg.inv(M1)
+
+	P=np.linalg.multi_dot([inverzM1,P1,M])
+	return P
 
 def izracunaj():
 
@@ -110,18 +193,18 @@ def izracunaj():
 	Leva.append(Leva2)
 	Leva.append(Leva3)
 	Leva.append(Leva4)
-	Leva.append(Leva11)
-	Leva.append(Leva12)
-	Leva.append(Leva15)
-	Leva.append(Leva16)
+	Leva.append(Leva19)
+	Leva.append(Leva20)
+	Leva.append(Leva23)
+	Leva.append(Leva24)
 	Desna.append(Desna1)
 	Desna.append(Desna2)
 	Desna.append(Desna3)
 	Desna.append(Desna4)
-	Desna.append(Desna11)
-	Desna.append(Desna12)
-	Desna.append(Desna15)
-	Desna.append(Desna16)
+	Desna.append(Desna19)
+	Desna.append(Desna20)
+	Desna.append(Desna23)
+	Desna.append(Desna24)
 	
 	n=len(Leva)
 	greska=0.00001
@@ -178,7 +261,7 @@ def izracunaj():
 
 	Desna5=np.cross(np.cross(MaliNedogled1d,Desna8),np.cross(MaliNedogled2d,Desna1))
 	Desna5=[Desna5[0]/Desna5[2],Desna5[1]/Desna5[2],Desna5[2]/Desna5[2]]
-	Desna6=np.cross(np.cross(Desna7,MaliNedogled1d),np.cross(Desna5,MaliNedogled3d))
+	Desna6=np.cross(np.cross(MaliNedogled1d,Desna7),np.cross(MaliNedogled3d,Desna5))
 	Desna6=[Desna6[0]/Desna6[2],Desna6[1]/Desna6[2],Desna6[2]/Desna6[2]]
 
 	#srednja
@@ -192,7 +275,7 @@ def izracunaj():
 
 	Leva10=np.cross(np.cross(SrednjiNedogled1,Leva9),np.cross(SrednjiNedogled2,Leva11))
 	Leva10=[Leva10[0]/Leva10[2],Leva10[1]/Leva10[2],Leva10[2]/Leva10[2]]
-	Leva14=np.cross(np.cross(SrednjiNedogled1,Leva13),np.cross(Leva15,SrednjiNedogled2))
+	Leva14=np.cross(np.cross(SrednjiNedogled1,Leva13),np.cross(SrednjiNedogled2,Leva15))
 	Leva14=[Leva14[0]/Leva14[2],Leva14[1]/Leva14[2],Leva14[2]/Leva14[2]]
 	Desna13=np.cross(np.cross(SrednjiNedogled1d,Desna14),np.cross(SrednjiNedogled2d,Desna16))
 	Desna13=[Desna13[0]/Desna13[2],Desna13[1]/Desna13[2],Desna13[2]/Desna13[2]]
@@ -307,9 +390,9 @@ def izracunaj():
 		print(NovaDesna[i])
 	for i in range(0,len(konacneTacke)):
 		print("\n")		
-		konacneTacke[i][0]=(konacneTacke[i][0])*1000
-		konacneTacke[i][1]=(konacneTacke[i][1])*1000
-		konacneTacke[i][2]=(konacneTacke[i][2])*1000
+		konacneTacke[i][0]=(konacneTacke[i][0])
+		konacneTacke[i][1]=(konacneTacke[i][1])
+		konacneTacke[i][2]=(konacneTacke[i][2])
 		print(i+1,konacneTacke[i])
 		t[0]=t[0]/n
 		t[1]=t[1]/n
@@ -317,18 +400,17 @@ def izracunaj():
 	return konacneTacke
 
 def iscrtaj(konacneTacke):
-
-#mala	
-#	glBegin(GL_LINES)
-#	glColor3f(1,0,0)	
-#	glVertex3f(konacneTacke[0][0],konacneTacke[0][1],konacneTacke[0][2])
-#	glVertex3f(konacneTacke[1][0],konacneTacke[1][1],konacneTacke[1][2])
-#	glEnd()
-#	glBegin(GL_LINES)
-#	glColor3f(1,0,0)
-#	glVertex3f(konacneTacke[1][0],konacneTacke[1][1],konacneTacke[1][2])
-#	glVertex3f(konacneTacke[2][0],konacneTacke[2][1],konacneTacke[2][2])
-#	glEnd()
+#mala
+	glBegin(GL_LINES)
+	glColor3f(1,0,0)	
+	glVertex3f(konacneTacke[0][0],konacneTacke[0][1],konacneTacke[0][2])
+	glVertex3f(konacneTacke[1][0],konacneTacke[1][1],konacneTacke[1][2])
+	glEnd()
+	glBegin(GL_LINES)
+	glColor3f(1,0,0)
+	glVertex3f(konacneTacke[1][0],konacneTacke[1][1],konacneTacke[1][2])
+	glVertex3f(konacneTacke[2][0],konacneTacke[2][1],konacneTacke[2][2])
+	glEnd()
 	glBegin(GL_LINES)
 	glColor3f(1,0,0)
 	glVertex3f(konacneTacke[2][0],konacneTacke[2][1],konacneTacke[2][2])
@@ -338,8 +420,8 @@ def iscrtaj(konacneTacke):
 	glColor3f(1,0,0)	
 	glVertex3f(konacneTacke[3][0],konacneTacke[3][1],konacneTacke[3][2])
 	glVertex3f(konacneTacke[0][0],konacneTacke[0][1],konacneTacke[0][2])
-	glEnd()	
-
+	glEnd()
+	
 	glBegin(GL_LINES)
 	glColor3f(1,0,0)
 	glVertex3f(konacneTacke[4][0],konacneTacke[4][1],konacneTacke[4][2])
@@ -360,12 +442,17 @@ def iscrtaj(konacneTacke):
 	glVertex3f(konacneTacke[7][0],konacneTacke[7][1],konacneTacke[7][2])
 	glVertex3f(konacneTacke[4][0],konacneTacke[4][1],konacneTacke[4][2])
 	glEnd()
-
+	
 	glBegin(GL_LINES)
 	glColor3f(1,0,0)		
 	glVertex3f(konacneTacke[0][0],konacneTacke[0][1],konacneTacke[0][2])
 	glVertex3f(konacneTacke[4][0],konacneTacke[4][1],konacneTacke[4][2])
 	glEnd()	
+	glBegin(GL_LINES)
+	glColor3f(1,0,0)		
+	glVertex3f(konacneTacke[1][0],konacneTacke[1][1],konacneTacke[1][2])
+	glVertex3f(konacneTacke[5][0],konacneTacke[5][1],konacneTacke[5][2])
+	glEnd()
 	glBegin(GL_LINES)
 	glColor3f(1,0,0)		
 	glVertex3f(konacneTacke[2][0],konacneTacke[2][1],konacneTacke[2][2])
@@ -376,11 +463,6 @@ def iscrtaj(konacneTacke):
 	glVertex3f(konacneTacke[3][0],konacneTacke[3][1],konacneTacke[3][2])
 	glVertex3f(konacneTacke[7][0],konacneTacke[7][1],konacneTacke[7][2])
 	glEnd()
-#	glBegin(GL_LINES)
-#	glColor3f(1,0,0)		
-#	glVertex3f(konacneTacke[1][0],konacneTacke[1][1],konacneTacke[1][2])
-#	glVertex3f(konacneTacke[5][0],konacneTacke[5][1],konacneTacke[5][2])
-#	glEnd()
 
 #srednja
 	glBegin(GL_LINES)
